@@ -75,3 +75,13 @@ npm run dev
 ```
 
 4. Magic links visibles en [http://localhost:8025](http://localhost:8025).
+
+<!-- BEGIN cc:que-se-valora -->
+¡Hola! Aquí te explico qué miramos cuando corregimos tu proyecto "Registro", para que sepas dónde poner el foco.
+
+## 📋 Qué se valora
+
+Lo que más pesa es que tu aplicación funcione como se espera y cumpla con todo lo que pide el enunciado. También es muy importante que tu código esté bien escrito, sea fácil de entender y que la estructura general de tu proyecto tenga sentido. El vídeo demo es otra parte importante, ya que nos ayuda a ver tu proyecto en acción y cómo lo presentas. Finalmente, aunque con un peso menor, valoramos que expliques bien tus decisiones y que la documentación sea clara.
+
+Recuerda que el enunciado del proyecto es la guía principal y que la evaluación no te penalizará por cosas que no se pidan explícitamente allí.
+<!-- END cc:que-se-valora -->
