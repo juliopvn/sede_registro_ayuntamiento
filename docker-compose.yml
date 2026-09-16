@@ -1,0 +1,37 @@
+services:
+  mongo:
+    image: mongo:7
+    container_name: sede-electronica-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    container_name: sede-electronica-mailhog
+    restart: unless-stopped
+    ports:
+      - "1025:1025" # SMTP
+      - "8025:8025" # UI web
+
+  rustfs:
+    image: rustfs/rustfs:latest
+    container_name: sede-electronica-rustfs
+    restart: unless-stopped
+    ports:
+      - "9000:9000" # API S3
+      - "9001:9001" # Consola web
+    environment:
+      RUSTFS_ADDRESS: "0.0.0.0:9000"
+      RUSTFS_CONSOLE_ADDRESS: "0.0.0.0:9001"
+      RUSTFS_CONSOLE_ENABLE: "true"
+      RUSTFS_ACCESS_KEY: rustfsadmin
+      RUSTFS_SECRET_KEY: rustfsadmin
+    volumes:
+      - rustfs-data:/data
+
+volumes:
+  mongo-data:
+  rustfs-data:
