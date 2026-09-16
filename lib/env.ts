@@ -1,5 +1,16 @@
 import { z } from "zod";
 
+/**
+ * Trata una variable de entorno vacía ("") como si no estuviera definida.
+ * Necesario porque algunas plataformas (p. ej. Vercel) guardan una variable
+ * "sin valor" como cadena vacía en vez de omitirla, lo que rompe
+ * `.optional()` en validadores con formato (`.email()`, `.url()`, etc.),
+ * ya que `.optional()` solo exime `undefined`, no `""`.
+ */
+function opcional<T extends z.ZodTypeAny>(schema: T) {
+  return z.preprocess((value) => (value === "" ? undefined : value), schema.optional());
+}
+
 const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   NEXT_PUBLIC_APP_URL: z.string().url(),
@@ -19,16 +30,16 @@ const envSchema = z.object({
     .transform((value) => value === "true"),
 
   EMAIL_PROVIDER: z.enum(["smtp", "resend"]).default("smtp"),
-  SMTP_HOST: z.string().optional(),
+  SMTP_HOST: opcional(z.string()),
   SMTP_PORT: z
     .string()
     .optional()
     .transform((value) => (value ? Number(value) : undefined)),
   EMAIL_FROM: z.string().min(1),
-  RESEND_API_KEY: z.string().optional(),
+  RESEND_API_KEY: opcional(z.string()),
 
-  SEED_FUNCIONARIO_EMAIL: z.string().email().optional(),
-  SEED_ADMINISTRADO_EMAIL: z.string().email().optional(),
+  SEED_FUNCIONARIO_EMAIL: opcional(z.string().email()),
+  SEED_ADMINISTRADO_EMAIL: opcional(z.string().email()),
 });
 
 export type Env = z.infer<typeof envSchema>;
