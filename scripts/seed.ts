@@ -152,6 +152,7 @@ async function main() {
         email: administradoEmail,
       },
       tipo: "general",
+      estado: "abierto",
       actuaciones: [
         {
           fecha: new Date("2026-01-11T09:00:00.000Z"),
@@ -165,6 +166,7 @@ async function main() {
         },
       ],
       creadoEn: new Date("2026-01-11T09:00:00.000Z"),
+      cerradoEn: null,
     },
     {
       codigo: "EXP-2026-000002",
@@ -175,6 +177,7 @@ async function main() {
         email: administradoEmail2,
       },
       tipo: "urbanismo",
+      estado: "cerrado",
       actuaciones: [
         {
           fecha: new Date("2026-01-13T09:00:00.000Z"),
@@ -186,8 +189,14 @@ async function main() {
           texto: "Se solicita informe técnico al servicio de urbanismo.",
           autorEmail: funcionarioEmail,
         },
+        {
+          fecha: new Date("2026-01-20T09:00:00.000Z"),
+          texto: `Expediente cerrado por ${funcionarioEmail}.`,
+          autorEmail: funcionarioEmail,
+        },
       ],
       creadoEn: new Date("2026-01-13T09:00:00.000Z"),
+      cerradoEn: new Date("2026-01-20T09:00:00.000Z"),
     },
   ];
 

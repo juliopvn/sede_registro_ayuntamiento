@@ -24,6 +24,11 @@ test.describe("Control de acceso por rol (verificado en servidor)", () => {
       data: { nombreOrganismo: "Intento no autorizado" },
     });
     expect(respuestaConfig.status()).toBe(403);
+
+    const respuestaCierre = await page.request.post(
+      "/api/expedientes/000000000000000000000000/cerrar",
+    );
+    expect(respuestaCierre.status()).toBe(403);
   });
 
   test("un administrado solo ve sus propios registros, aunque haya registros de otros", async ({

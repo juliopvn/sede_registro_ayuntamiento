@@ -3,9 +3,10 @@ import { ObjectId } from "mongodb";
 import { z } from "zod";
 import { expedientesCollection, registrosCollection } from "@/lib/db";
 import { requireRole, withApiErrorHandling } from "@/lib/rbac";
-import type { Expediente, TipoExpediente } from "@/lib/types";
+import type { EstadoExpediente, Expediente, TipoExpediente } from "@/lib/types";
 
 const TIPOS_VALIDOS: TipoExpediente[] = ["general", "urbanismo", "tributario", "subvenciones", "otros"];
+const ESTADOS_VALIDOS: EstadoExpediente[] = ["abierto", "cerrado"];
 
 const crearExpedienteSchema = z.object({
   registroId: z.string().min(1),
@@ -58,6 +59,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         email: registro.usuarioEmail,
       },
       tipo: parsed.data.tipo,
+      estado: "abierto",
       actuaciones: [
         {
           fecha: new Date(),
@@ -66,6 +68,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         },
       ],
       creadoEn: new Date(),
+      cerradoEn: null,
     };
 
     await (await expedientesCollection()).insertOne(expediente);
@@ -81,8 +84,12 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   return withApiErrorHandling(async () => {
     await requireRole("funcionario");
     const busqueda = request.nextUrl.searchParams.get("q")?.trim();
+    const estadoParam = request.nextUrl.searchParams.get("estado");
 
     const filtro: Record<string, unknown> = {};
+    if (estadoParam && ESTADOS_VALIDOS.includes(estadoParam as EstadoExpediente)) {
+      filtro.estado = estadoParam;
+    }
     if (busqueda) {
       filtro.$or = [
         { codigo: { $regex: busqueda, $options: "i" } },

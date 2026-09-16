@@ -113,6 +113,18 @@ docker-compose.yml                Mongo, MailHog, RustFS (solo local)
 3. **Actuaciones van embebidas** en `expediente.actuaciones[]` (no en una
    colección aparte) — es una decisión de modelado intencional: siempre se
    leen junto al expediente y no crecen sin límite razonable.
+3b. **Expediente tiene `estado: "abierto" | "cerrado"`.** Nace `abierto`.
+   Solo el funcionario puede cerrarlo (`POST /api/expedientes/:id/cerrar`),
+   lo que añade automáticamente una actuación de cierre y fija `cerradoEn`.
+   Un expediente **cerrado no admite nuevas actuaciones**
+   (`POST .../actuaciones` responde 409) — no hay endpoint de reapertura,
+   es deliberado (no estaba en el alcance pedido). El listado
+   `GET /api/expedientes` acepta `?estado=abierto|cerrado` para filtrar; sin
+   parámetro devuelve todos (el filtro por defecto a "abiertos" vive en la
+   página `app/funcionario/expedientes/page.tsx`, con pestañas
+   Abiertos/Cerrados/Todos). El filtro de "abiertos" usa `estado: { $ne:
+   "cerrado" }` (no `estado: "abierto"`) para tratar como abiertos los
+   documentos legacy sin el campo.
 4. **Adjuntos**: el registro solo guarda `key` (+ metadatos); nunca una URL
    firmada. Las URLs se generan al vuelo y expiran pronto (15 min subida, 5
    min descarga). La subida es **directa del navegador a S3** vía PUT

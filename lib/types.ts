@@ -65,6 +65,8 @@ export type TipoExpediente =
   | "subvenciones"
   | "otros";
 
+export type EstadoExpediente = "abierto" | "cerrado";
+
 export interface Expediente {
   _id: ObjectId;
   codigo: string;
@@ -75,8 +77,10 @@ export interface Expediente {
     email: string;
   };
   tipo: TipoExpediente;
+  estado: EstadoExpediente;
   actuaciones: Actuacion[];
   creadoEn: Date;
+  cerradoEn: Date | null;
 }
 
 export interface ConfigHome {

@@ -1,13 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { ObjectId } from "mongodb";
-import { z } from "zod";
 import { expedientesCollection } from "@/lib/db";
 import { requireRole, withApiErrorHandling } from "@/lib/rbac";
 import type { Actuacion } from "@/lib/types";
-
-const bodySchema = z.object({
-  texto: z.string().min(1, "El texto de la actuación es obligatorio."),
-});
 
 export async function POST(
   request: NextRequest,
@@ -21,24 +16,20 @@ export async function POST(
       return NextResponse.json({ error: "Identificador inválido." }, { status: 400 });
     }
 
-    const parsed = bodySchema.safeParse(await request.json().catch(() => null));
-    if (!parsed.success) {
-      return NextResponse.json(
-        { error: parsed.error.issues[0]?.message ?? "Datos inválidos." },
-        { status: 400 },
-      );
-    }
-
-    const actuacion: Actuacion = {
-      fecha: new Date(),
-      texto: parsed.data.texto,
+    const cierre: Date = new Date();
+    const actuacionCierre: Actuacion = {
+      fecha: cierre,
+      texto: `Expediente cerrado por ${funcionario.email}.`,
       autorEmail: funcionario.email,
     };
 
     const collection = await expedientesCollection();
     const resultado = await collection.findOneAndUpdate(
       { _id: new ObjectId(id), estado: { $ne: "cerrado" } },
-      { $push: { actuaciones: actuacion } },
+      {
+        $set: { estado: "cerrado", cerradoEn: cierre },
+        $push: { actuaciones: actuacionCierre },
+      },
       { returnDocument: "after" },
     );
 
@@ -47,12 +38,9 @@ export async function POST(
       if (!existe) {
         return NextResponse.json({ error: "Expediente no encontrado." }, { status: 404 });
       }
-      return NextResponse.json(
-        { error: "El expediente está cerrado y no admite nuevas actuaciones." },
-        { status: 409 },
-      );
+      return NextResponse.json({ error: "El expediente ya está cerrado." }, { status: 409 });
     }
 
-    return NextResponse.json({ expediente: resultado }, { status: 201 });
+    return NextResponse.json({ expediente: resultado });
   });
 }

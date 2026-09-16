@@ -26,4 +26,22 @@ test("un funcionario ve un registro ajeno, crea un expediente y añade una actua
 
   // La actuación inicial (incoación) y la nueva deben estar ambas presentes.
   await expect(page.getByText("Expediente incoado a partir del registro de entrada")).toBeVisible();
+
+  const codigo = await page.getByRole("heading", { name: /^EXP-\d{4}-\d{6}$/ }).textContent();
+
+  // Cerrar el expediente: exige confirmación, deja de admitir actuaciones.
+  await page.getByRole("button", { name: "Cerrar expediente" }).click();
+  await page.getByRole("button", { name: "Sí, cerrar" }).click();
+
+  await expect(page.getByText("Cerrado", { exact: true })).toBeVisible();
+  await expect(page.getByText("Este expediente está cerrado")).toBeVisible();
+  await expect(page.getByPlaceholder("Describe la actuación realizada…")).not.toBeVisible();
+  await expect(page.getByText(`Expediente cerrado por ${EMAIL_FUNCIONARIO}.`)).toBeVisible();
+
+  // Debe aparecer en la pestaña "Cerrados" y desaparecer de "Abiertos".
+  await page.goto("/funcionario/expedientes?estado=cerrado");
+  await expect(page.getByText(codigo!)).toBeVisible();
+
+  await page.goto("/funcionario/expedientes");
+  await expect(page.getByText(codigo!)).not.toBeVisible();
 });

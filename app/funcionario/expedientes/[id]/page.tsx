@@ -2,6 +2,7 @@ import { ObjectId } from "mongodb";
 import { notFound } from "next/navigation";
 import { expedientesCollection, registrosCollection } from "@/lib/db";
 import { FormularioActuacion } from "@/components/FormularioActuacion";
+import { BotonCerrarExpediente } from "@/components/BotonCerrarExpediente";
 
 export const dynamic = "force-dynamic";
 
@@ -19,16 +20,28 @@ export default async function ExpedienteDetallePage({
   if (!expediente) notFound();
 
   const registro = await (await registrosCollection()).findOne({ _id: expediente.registroId });
+  const cerrado = expediente.estado === "cerrado";
 
   const actuaciones = [...expediente.actuaciones].sort((a, b) => b.fecha.getTime() - a.fecha.getTime());
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-14">
-      <p className="font-mono text-xs uppercase tracking-[0.2em] text-seal">Expediente</p>
-      <h1 className="mt-2 font-mono text-3xl font-medium text-ink">{expediente.codigo}</h1>
-      <p className="mt-2 text-sm text-slate">
-        {expediente.sujeto.nombre} · {expediente.sujeto.email} · Tipo: {expediente.tipo}
-      </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="font-mono text-xs uppercase tracking-[0.2em] text-seal">Expediente</p>
+          <h1 className="mt-2 font-mono text-3xl font-medium text-ink">{expediente.codigo}</h1>
+          <p className="mt-2 text-sm text-slate">
+            {expediente.sujeto.nombre} · {expediente.sujeto.email} · Tipo: {expediente.tipo}
+          </p>
+        </div>
+        <span
+          className={`shrink-0 rounded-sm px-3 py-1.5 font-mono text-xs uppercase ${
+            cerrado ? "bg-paper-dim text-slate-dim" : "bg-green/10 text-green"
+          }`}
+        >
+          {cerrado ? "Cerrado" : "Abierto"}
+        </span>
+      </div>
 
       {registro && (
         <div className="mt-6 rounded-sm border border-line bg-paper-dim px-5 py-4 text-sm text-slate">
@@ -41,12 +54,27 @@ export default async function ExpedienteDetallePage({
       )}
 
       <section className="mt-10">
-        <h2 className="font-[family-name:var(--font-display)] text-xl font-medium text-ink">
-          Añadir actuación
-        </h2>
-        <div className="mt-4">
-          <FormularioActuacion expedienteId={expediente._id.toString()} />
-        </div>
+        {cerrado ? (
+          <p className="rounded-sm border border-line bg-paper-dim px-4 py-3 text-sm text-slate-dim">
+            Este expediente está cerrado
+            {expediente.cerradoEn
+              ? ` desde el ${formateadorFecha.format(expediente.cerradoEn)}`
+              : ""}
+            . No admite nuevas actuaciones.
+          </p>
+        ) : (
+          <>
+            <div className="flex items-center justify-between gap-4">
+              <h2 className="font-[family-name:var(--font-display)] text-xl font-medium text-ink">
+                Añadir actuación
+              </h2>
+              <BotonCerrarExpediente expedienteId={expediente._id.toString()} />
+            </div>
+            <div className="mt-4">
+              <FormularioActuacion expedienteId={expediente._id.toString()} />
+            </div>
+          </>
+        )}
       </section>
 
       <section className="mt-12">
