@@ -76,6 +76,24 @@ npm run dev
 
 4. Magic links visibles en [http://localhost:8025](http://localhost:8025).
 
+## 🌐 Despliegue
+
+La Sede Electrónica está desplegada en producción: **[https://registro.jpavon-tech.com](https://registro.jpavon-tech.com)**
+
+| Capa | Servicio |
+|------|----------|
+| Hosting | Vercel |
+| Base de datos | MongoDB Atlas |
+| Storage de adjuntos | Cloudflare R2 |
+| Email (magic link) | Resend |
+| DNS / dominio | Cloudflare (`jpavon-tech.com`) |
+
+**Flujo de CI/CD**: GitLab es la fuente de verdad del código. Un pipeline de calidad
+(`lint → typecheck → build → e2e`) protege `main` — los merge requests solo pueden
+integrarse si el pipeline pasa en verde. GitLab mirroriza automáticamente el
+repositorio a GitHub, y Vercel importa y despliega desde ese mirror en cada
+actualización de `main`.
+
 <!-- BEGIN cc:que-se-valora -->
 ¡Hola! Aquí te explico qué miramos cuando corregimos tu proyecto "Registro", para que sepas dónde poner el foco.
 
