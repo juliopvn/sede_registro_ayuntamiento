@@ -1,0 +1,1 @@
+Documento de prueba utilizado por la suite E2E de Playwright.
