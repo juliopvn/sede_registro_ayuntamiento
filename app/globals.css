@@ -1,0 +1,91 @@
+@import "tailwindcss";
+
+:root {
+  /* Sede Electrónica — tokens de diseño
+     Metáfora: el sello de registro de entrada sobre papel de folio oficial. */
+  --color-paper: #f7f4ec;
+  --color-paper-dim: #efe9db;
+  --color-ink: #1b2a4a;
+  --color-ink-soft: #2c3f66;
+  --color-slate: #4b5567;
+  --color-slate-dim: #8891a0;
+  --color-seal: #a8322d;
+  --color-seal-dark: #7f231f;
+  --color-bronze: #b08968;
+  --color-green: #2f6b4f;
+  --color-line: #d9d2bf;
+
+  --font-display: "Fraunces", ui-serif, Georgia, serif;
+  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+@theme inline {
+  --color-paper: var(--color-paper);
+  --color-paper-dim: var(--color-paper-dim);
+  --color-ink: var(--color-ink);
+  --color-ink-soft: var(--color-ink-soft);
+  --color-slate: var(--color-slate);
+  --color-slate-dim: var(--color-slate-dim);
+  --color-seal: var(--color-seal);
+  --color-seal-dark: var(--color-seal-dark);
+  --color-bronze: var(--color-bronze);
+  --color-green: var(--color-green);
+  --color-line: var(--color-line);
+
+  --font-display: var(--font-display);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+}
+
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-seal);
+  outline-offset: 2px;
+}
+
+/* --- Sello de registro: el elemento firma del proyecto --- */
+.sello {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  color: var(--color-seal);
+  transform: rotate(-8deg);
+  font-family: var(--font-mono);
+  text-align: center;
+  line-height: 1.15;
+  letter-spacing: 0.04em;
+}
+
+.sello::before {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  opacity: 0.55;
+}
+
+.textura-papel {
+  background-image:
+    radial-gradient(circle at 20% 20%, rgba(27, 42, 74, 0.03), transparent 45%),
+    radial-gradient(circle at 80% 60%, rgba(168, 50, 45, 0.025), transparent 40%);
+}
