@@ -1,0 +1,128 @@
+# Pipeline de calidad para la Sede Electrónica (Fase B3 del plan de implementación).
+#
+# GitLab es la fuente de verdad de este repo; se mirroriza automáticamente a
+# GitHub, y Vercel importa y despliega desde ese mirror. Este pipeline NO
+# sustituye el despliegue de Vercel: es una puerta de calidad (lint,
+# typecheck, build, E2E) que debe pasar en verde antes de mergear a la rama
+# que se mirroriza, para que solo código verificado llegue a producción.
+#
+# Configura en GitLab (Settings → Repository → Branch rules / Merge requests):
+#   - Protección de la rama principal exigiendo pipeline en verde antes de merge.
+
+image: node:22-bookworm
+
+stages:
+  - install
+  - quality # lint, typecheck (y test:unit cuando exista)
+  - build
+  - e2e
+
+variables:
+  NPM_CONFIG_CACHE: "$CI_PROJECT_DIR/.npm"
+
+.cache_node_modules: &cache_node_modules
+  key:
+    files:
+      - package-lock.json
+  paths:
+    - node_modules/
+    - .npm/
+  policy: pull
+
+install:
+  stage: install
+  cache:
+    <<: *cache_node_modules
+    policy: pull-push
+  script:
+    - npm ci --prefer-offline
+
+lint:
+  stage: quality
+  needs: ["install"]
+  cache: *cache_node_modules
+  script:
+    - npm run lint
+
+typecheck:
+  stage: quality
+  needs: ["install"]
+  cache: *cache_node_modules
+  script:
+    - npm run typecheck
+
+# test:unit:
+#   No hay pruebas unitarias en este proyecto todavía (ver AGENTS.md). Cuando
+#   existan (p. ej. con Vitest), añadir aquí un job en el stage "quality".
+
+build:
+  stage: build
+  needs: ["install"]
+  cache: *cache_node_modules
+  variables:
+    # Variables mínimas para que `next build` no falle por lib/env.ts;
+    # no se usan en runtime real durante el build.
+    NODE_ENV: "production"
+    NEXT_PUBLIC_APP_URL: "http://localhost:3000"
+    APP_SESSION_SECRET: "ci-build-only-secret-not-used-at-runtime"
+    MONGODB_URI: "mongodb://localhost:27017/sede-electronica-ci-build"
+    STORAGE_PROVIDER: "local"
+    S3_ENDPOINT: "http://localhost:9000"
+    S3_ACCESS_KEY_ID: "buildonly"
+    S3_SECRET_ACCESS_KEY: "buildonly"
+    S3_BUCKET_NAME: "buildonly"
+    EMAIL_PROVIDER: "smtp"
+    SMTP_HOST: "localhost"
+    SMTP_PORT: "1025"
+    EMAIL_FROM: "Sede Electrónica <no-reply@localhost>"
+  script:
+    - npm run build
+
+test:e2e:
+  stage: e2e
+  needs: ["install", "build"]
+  image: mcr.microsoft.com/playwright:v1.63.0-jammy
+  cache: *cache_node_modules
+  services:
+    - name: mongo:7
+      alias: mongo
+    - name: mailhog/mailhog:v1.0.1
+      alias: mailhog
+    - name: rustfs/rustfs:latest
+      alias: rustfs
+  variables:
+    CI: "true"
+    NODE_ENV: "test"
+    NEXT_PUBLIC_APP_URL: "http://localhost:3000"
+    APP_SESSION_SECRET: "ci-e2e-secret-do-not-use-in-production"
+    # Solo la BD de test viaja por el pipeline; nunca credenciales de producción.
+    MONGODB_URI: "mongodb://mongo:27017/sede-electronica-test"
+    STORAGE_PROVIDER: "local"
+    S3_ENDPOINT: "http://rustfs:9000"
+    S3_REGION: "auto"
+    S3_ACCESS_KEY_ID: "rustfsadmin"
+    S3_SECRET_ACCESS_KEY: "rustfsadmin"
+    S3_BUCKET_NAME: "sede-electronica-adjuntos-ci"
+    S3_FORCE_PATH_STYLE: "true"
+    RUSTFS_ADDRESS: "0.0.0.0:9000"
+    RUSTFS_CONSOLE_ADDRESS: "0.0.0.0:9001"
+    RUSTFS_CONSOLE_ENABLE: "true"
+    RUSTFS_ACCESS_KEY: "rustfsadmin"
+    RUSTFS_SECRET_KEY: "rustfsadmin"
+    EMAIL_PROVIDER: "smtp"
+    SMTP_HOST: "mailhog"
+    SMTP_PORT: "1025"
+    EMAIL_FROM: "Sede Electrónica <no-reply@ci.local>"
+    MAILHOG_API_URL: "http://mailhog:8025"
+    SEED_FUNCIONARIO_EMAIL: "funcionario@example.com"
+    SEED_ADMINISTRADO_EMAIL: "administrado@example.com"
+  before_script:
+    - npx tsx scripts/seed.ts
+  script:
+    - npx playwright test
+  artifacts:
+    when: always
+    paths:
+      - playwright-report/
+      - test-results/
+    expire_in: 7 days
